@@ -8,6 +8,7 @@
 
 #include <pcap.h>
 #include <stdio.h>
+#include <string.h>
 #include <WinSock2.h>
 #pragma comment(lib, "ws2_32")
 #include "protocol.h"
@@ -46,6 +47,9 @@ int main()
 
 	int mode_num;
 	char errbuf[PCAP_ERRBUF_SIZE];
+	char save_name[100];
+	pcap_t* fp;
+	FILE* save_file;
 
 	printf("======================== Packet Analysis Tool ========================\n");
 	printf("1. Offline\n2. Live\n");
@@ -57,10 +61,9 @@ int main()
 	{
 		case 1:
 		{
-			pcap_t* fp;
 			char file_path[100];
 
-			printf("Enter pcap file path: ");
+			printf("Enter pcap file path(max length : 100): ");
 			scanf("%s", file_path, 100);
 
 			/* Open the capture file */
@@ -71,18 +74,12 @@ int main()
 				fprintf(stderr, "\nUnable to open the file %s.\n", file_path);
 				return -1;
 			}
-
-			/* Read and dispatch packets until EOF is reached */
-			pcap_loop(fp, 0, packet_handler, NULL);
-
-			pcap_close(fp);
 			break;
 		}
 		case 2:
 		{
 			pcap_if_t* alldevs;
 			pcap_if_t* d;
-			pcap_t* adhandle;
 			int inum;
 			int i = 0;
 
@@ -125,7 +122,7 @@ int main()
 
 			/* Open the device */
 			/* Open the adapter */
-			if ((adhandle = pcap_open_live(d->name,	// name of the device
+			if ((fp = pcap_open_live(d->name,	// name of the device
 									65536,			// portion of the packet to capture. 
 													// 65536 grants that the whole packet will be captured on all the MACs.
 									1,				// promiscuous mode (nonzero means promiscuous)
@@ -144,13 +141,19 @@ int main()
 			/* At this point, we don't need any more the device list. Free it */
 			pcap_freealldevs(alldevs);
 
-			/* start the capture */
-			pcap_loop(adhandle, 0, packet_handler, NULL);
-
-			pcap_close(adhandle);
 			break;
 		}
 	}
+	printf("Enter the file name to save(max length :  100): ");
+	scanf_s("%s", save_name, 100);
+	save_file = fopen(strcat(save_name, ".txt"), "w");
+
+	/* start the capture */
+	pcap_loop(fp, 0, packet_handler, (unsigned char*)save_file);
+
+	pcap_close(fp);
+	fclose(save_file);
+
 	system("pause");
 	return 0;
 }
