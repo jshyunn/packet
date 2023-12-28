@@ -12,6 +12,7 @@
 #include <WinSock2.h>
 #pragma comment(lib, "ws2_32")
 #include "protocol.h"
+#include "pkt_handler.h"
 
 #ifdef _WIN32
 #include <tchar.h>
