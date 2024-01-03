@@ -29,7 +29,7 @@ void frame_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_
 
 	printf("=============================== Frame ================================\n");
 	printf("%s,%.6d Frame Length: %d Capture Length: %d\n", timestr, header->ts.tv_usec, header->caplen, header->len);
-	fprintf(save_file, "%s,%.6d Frame Length: %d Capture Length: %d\n", timestr, header->ts.tv_usec, header->caplen, header->len);
+	//fprintf(save_file, "%s,%.6d Frame Length: %d Capture Length: %d\n", timestr, header->ts.tv_usec, header->caplen, header->len);
 }
 
 void ether_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
@@ -40,15 +40,15 @@ void ether_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_
 		pEther->src.byte1, pEther->src.byte2, pEther->src.byte3, pEther->src.byte4, pEther->src.byte5, pEther->src.byte6,
 		pEther->dst.byte1, pEther->dst.byte2, pEther->dst.byte3, pEther->dst.byte4, pEther->dst.byte5, pEther->dst.byte6,
 		ntohs(pEther->type));
-	fprintf(save_file, "SRC MAC: %02x:%02x:%02x:%02x:%02x:%02x -> DST MAC: %02x:%02x:%02x:%02x:%02x:%02x Type: %04x\n",
+	/*fprintf(save_file, "SRC MAC: %02x:%02x:%02x:%02x:%02x:%02x -> DST MAC: %02x:%02x:%02x:%02x:%02x:%02x Type: %04x\n",
 		pEther->src.byte1, pEther->src.byte2, pEther->src.byte3, pEther->src.byte4, pEther->src.byte5, pEther->src.byte6,
 		pEther->dst.byte1, pEther->dst.byte2, pEther->dst.byte3, pEther->dst.byte4, pEther->dst.byte5, pEther->dst.byte6,
-		ntohs(pEther->type));
+		ntohs(pEther->type));*/
 	switch (ntohs(pEther->type))
 	{
 		case ETHERNET_IP:
 		{
-			ip_handler(save_file, pkt_data + sizeof(ether_header));
+			ip_handler(save_file, header, pkt_data + sizeof(ether_header));
 			break;
 		}
 		case ETHERNET_ARP:
@@ -64,7 +64,7 @@ void ether_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_
 	}
 }
 
-void ip_handler(u_char* save_file, const u_char* pkt_data)
+void ip_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
 {
 	ip_header* ip = (ip_header*)pkt_data;
 	printf("=============================== IPv4 =================================\n");
@@ -79,7 +79,22 @@ void ip_handler(u_char* save_file, const u_char* pkt_data)
 	printf("SRC IP: %d.%d.%d.%d -> DST IP: %d.%d.%d.%d\n",
 		ip->src.byte1, ip->src.byte2, ip->src.byte3, ip->src.byte4,
 		ip->dst.byte1, ip->dst.byte2, ip->dst.byte3, ip->dst.byte4);
-	fprintf(save_file, "Version: %d\n", (int)(ip->ver_ihl & 0xf0) / 16);
+
+	struct tm* ltime;
+	char timestr[16];
+	time_t local_tv_sec;
+
+	/* convert the timestamp to readable format */
+	local_tv_sec = header->ts.tv_sec;
+	ltime = localtime(&local_tv_sec);
+	strftime(timestr, sizeof timestr, "%H:%M:%S", ltime);
+	fprintf(save_file, "%s\t%d.%d.%d.%d\t%d.%d.%d.%d\t%d\t%d\n",
+		timestr,
+		ip->src.byte1, ip->src.byte2, ip->src.byte3, ip->src.byte4,
+		ip->dst.byte1, ip->dst.byte2, ip->dst.byte3, ip->dst.byte4,
+		ip->pro,
+		header->len);
+	/*fprintf(save_file, "Version: %d\n", (int)(ip->ver_ihl & 0xf0) / 16);
 	fprintf(save_file, "Internet Header Length: %d\n", (int)(ip->ver_ihl & 0x0f) * 4);
 	fprintf(save_file, "Type of Service: %02x\n", ip->tos);
 	fprintf(save_file, "Total Length: %d\n", ntohs(ip->tlen));
@@ -89,7 +104,7 @@ void ip_handler(u_char* save_file, const u_char* pkt_data)
 	fprintf(save_file, "Header Checksum : %04x\n", ntohs(ip->checksum));
 	fprintf(save_file, "SRC IP: %d.%d.%d.%d -> DST IP: %d.%d.%d.%d\n",
 		ip->src.byte1, ip->src.byte2, ip->src.byte3, ip->src.byte4,
-		ip->dst.byte1, ip->dst.byte2, ip->dst.byte3, ip->dst.byte4);
+		ip->dst.byte1, ip->dst.byte2, ip->dst.byte3, ip->dst.byte4);*/
 
 	const u_char* de_pkt_data = (pkt_data + (int)(ip->ver_ihl & 0x0f) * 4);
 	switch (ip->pro)
@@ -128,7 +143,7 @@ void arp_handler(u_char* save_file, const u_char* pkt_data)
 		arp->dha.byte1, arp->dha.byte2, arp->dha.byte3, arp->dha.byte4, arp->dha.byte5, arp->dha.byte6);
 	printf("Target IP Address: %d.%d.%d.%d\n", arp->dpa.byte1, arp->dpa.byte2, arp->dpa.byte3, arp->dpa.byte4);
 
-	fprintf(save_file, "Hardware Type: %04x\n", ntohs(arp->hard));
+	/*(save_file, "Hardware Type: %04x\n", ntohs(arp->hard));
 	fprintf(save_file, "Protocol Type: %04x\n", ntohs(arp->pro));
 	fprintf(save_file, "Hardware Size: %d\n", arp->hlen);
 	fprintf(save_file, "Protocol Size: %d\n", arp->plen);
@@ -138,7 +153,7 @@ void arp_handler(u_char* save_file, const u_char* pkt_data)
 	fprintf(save_file, "Sender IP Address: %d.%d.%d.%d\n", arp->spa.byte1, arp->spa.byte2, arp->spa.byte3, arp->spa.byte4);
 	fprintf(save_file, "Target MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n",
 		arp->dha.byte1, arp->dha.byte2, arp->dha.byte3, arp->dha.byte4, arp->dha.byte5, arp->dha.byte6);
-	fprintf(save_file, "Target IP Address: %d.%d.%d.%d\n", arp->dpa.byte1, arp->dpa.byte2, arp->dpa.byte3, arp->dpa.byte4);
+	fprintf(save_file, "Target IP Address: %d.%d.%d.%d\n", arp->dpa.byte1, arp->dpa.byte2, arp->dpa.byte3, arp->dpa.byte4);*/
 }
 
 void rarp_handler(u_char* save_file, const u_char* pkt_data)
@@ -155,9 +170,9 @@ void icmp_handler(u_char* save_file, const u_char* pkt_data)
 	printf("Code: %02x\n", icmp->code);
 	printf("Checksum: %04x\n", ntohs(icmp->checksum));
 
-	fprintf(save_file, "Type: %02x\n", icmp->type);
+	/*fprintf(save_file, "Type: %02x\n", icmp->type);
 	fprintf(save_file, "Code: %02x\n", icmp->code);
-	fprintf(save_file, "Checksum: %04x\n", ntohs(icmp->checksum));
+	fprintf(save_file, "Checksum: %04x\n", ntohs(icmp->checksum));*/
 
 	data_handler(save_file, pkt_data + sizeof(icmp_header));
 }
@@ -174,13 +189,13 @@ void tcp_handler(u_char* save_file, const u_char* pkt_data)
 	printf("Checksum: %04x\n", ntohs(tcp->checksum));
 	printf("Urgent Pointer: %04x\n", ntohs(tcp->urgent_ptr));
 
-	fprintf(save_file, "SRC Port: %d -> DST Port: %d\n", ntohs(tcp->sport), ntohs(tcp->dport));
+	/*fprintf(save_file, "SRC Port: %d -> DST Port: %d\n", ntohs(tcp->sport), ntohs(tcp->dport));
 	fprintf(save_file, "Seq: %08x, Ack: %08x\n", ntohs(tcp->seq_num), ntohs(tcp->ack_num));
 	fprintf(save_file, "Header Len: %d\n", (int)(tcp->hlen_flags & 0x00ff) / 16 * 4);
 	fprintf(save_file, "Flags: %03x\n", ntohs(tcp->hlen_flags) & 0x0fff);
 	fprintf(save_file, "Window Size: %d\n", ntohs(tcp->win_size));
 	fprintf(save_file, "Checksum: %04x\n", ntohs(tcp->checksum));
-	fprintf(save_file, "Urgent Pointer: %04x\n", ntohs(tcp->urgent_ptr));
+	fprintf(save_file, "Urgent Pointer: %04x\n", ntohs(tcp->urgent_ptr));*/
 
 	data_handler(save_file, pkt_data + (int)(tcp->hlen_flags & 0x00ff) / 16 * 4);
 }
@@ -193,9 +208,9 @@ void udp_handler(u_char* save_file, const u_char* pkt_data)
 	printf("Total Length: %d\n", ntohs(udp->tlen));
 	printf("Checksum: %04x\n", ntohs(udp->checksum));
 
-	fprintf(save_file, "SRC Port: %d -> DST Port: %d\n", ntohs(udp->sport), ntohs(udp->dport));
+	/*fprintf(save_file, "SRC Port: %d -> DST Port: %d\n", ntohs(udp->sport), ntohs(udp->dport));
 	fprintf(save_file, "Total Length: %d\n", ntohs(udp->tlen));
-	fprintf(save_file, "Checksum: %04x\n", ntohs(udp->checksum));
+	fprintf(save_file, "Checksum: %04x\n", ntohs(udp->checksum));*/
 
 	data_handler(save_file, pkt_data + sizeof(udp_header));
 }
@@ -204,7 +219,7 @@ void data_handler(u_char* save_file, const u_char* pkt_data)
 {
 	printf("================================ DATA ================================\n");
 	printf("%s\n", pkt_data);
-	fprintf(save_file, "%s\n\n", pkt_data);
+	//fprintf(save_file, "%s\n\n", pkt_data);
 }
 
 void dispatcher_handler(u_char* temp1, const struct pcap_pkthdr* header, const u_char* pkt_data)

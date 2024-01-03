@@ -9,8 +9,6 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
-#include <WinSock2.h>
-#pragma comment(lib, "ws2_32")
 #include "protocol.h"
 #include "pkt_handler.h"
 
@@ -35,6 +33,8 @@ BOOL LoadNpcapDlls() // Npcap을 설치했는지 확인하는 함수
 }
 #endif
 
+int get_modenum();
+
 int main()
 {
 #ifdef _WIN32
@@ -46,115 +46,126 @@ int main()
 	}
 #endif
 
-	int mode_num;
+	printf("====================== Intrusion Detection Tool ======================\n");
+
+	int b_open = 0;
 	char errbuf[PCAP_ERRBUF_SIZE];
-	char save_name[100];
 	pcap_t* fp;
-	FILE* save_file;
 
-	printf("======================== Packet Analysis Tool ========================\n");
-	printf("1. Offline\n2. Live\n");
-	printf("Enter the mode: ");
-	scanf_s("%d", &mode_num, 1);
-	printf("======================================================================\n");
+	while (1) {
+		printf("[1] Offline\n[2] Live\n[3] Exit\n");
+		printf("Enter the mode: ");
 
-	switch (mode_num)
-	{
+		switch (get_modenum())
+		{
 		case 1:
-		{
-			char file_path[100];
-
-			printf("Enter pcap file path(max length : 100): ");
-			scanf("%s", file_path, 100);
-
-			/* Open the capture file */
-			if ((fp = pcap_open_offline(file_path,			// name of the device
-									errbuf					// error buffer
-								)) == NULL)
 			{
-				fprintf(stderr, "\nUnable to open the file %s.\n", file_path);
-				return -1;
+				char pcap_file_path[PCAP_ERRBUF_SIZE];
+
+				printf("Enter pcap file path: ");
+				scanf_s("%s", pcap_file_path, PCAP_ERRBUF_SIZE);
+
+				/* Open the capture file */
+				if ((fp = pcap_open_offline(pcap_file_path, errbuf)) == NULL)
+				{
+					printf("\nUnable to open the file: %s.\n", pcap_file_path);
+					b_open = 0;
+				}
+				break;
 			}
-			break;
-		}
 		case 2:
-		{
-			pcap_if_t* alldevs;
-			pcap_if_t* d;
-			int inum;
-			int i = 0;
-
-			/* Retrieve the device list */
-			if (pcap_findalldevs(&alldevs, errbuf) == -1) // Device 확인
 			{
-				fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
-				exit(1);
-			}
+				pcap_if_t* alldevs;
+				pcap_if_t* d;
+				int inum;
+				int i = 0;
 
-			/* Print the list */
-			for (d = alldevs; d; d = d->next) // Device list 나열
-			{
-				printf("%d. %s", ++i, d->name);
-				if (d->description)
-					printf(" (%s)\n", d->description);
-				else
-					printf(" (No description available)\n");
-			}
+				/* Retrieve the device list */
+				if (pcap_findalldevs(&alldevs, errbuf) == -1) // Device 확인
+				{
+					printf("Error in pcap_findalldevs: %s\n", errbuf);
+					b_open = 0;
+				}
 
-			if (i == 0)
-			{
-				printf("\nNo interfaces found! Make sure Npcap is installed.\n");
-				return -1;
-			}
+				/* Print the list */
+				for (d = alldevs; d; d = d->next) // Device list 나열
+				{
+					printf("%d. %s", ++i, d->name);
+					if (d->description)
+						printf(" (%s)\n", d->description);
+					else
+						printf(" (No description available)\n");
+				}
 
-			printf("Enter the interface number (1-%d):", i);
-			scanf_s("%d", &inum, 1);
+				if (i == 0)
+				{
+					printf("\nNo interfaces found! Make sure Npcap is installed.\n");
+					b_open = 0;
+				}
 
-			if (inum < 1 || inum > i)
-			{
-				printf("\nInterface number out of range.\n");
-				/* Free the device list */
-				pcap_freealldevs(alldevs);
-				return -1;
-			}
+				printf("Enter the interface number (1-%d):", i);
+				scanf_s("%d", &inum, 1);
 
-			/* Jump to the selected adapter */
-			for (d = alldevs, i = 0; i < inum - 1; d = d->next, i++);
+				if (inum < 1 || inum > i)
+				{
+					printf("\nInterface number out of range.\n");
+					/* Free the device list */
+					pcap_freealldevs(alldevs);
+					b_open = 0;
+				}
 
-			/* Open the device */
-			/* Open the adapter */
-			if ((fp = pcap_open_live(d->name,	// name of the device
+				/* Jump to the selected adapter */
+				for (d = alldevs, i = 0; i < inum - 1; d = d->next, i++);
+
+				/* Open the device */
+				/* Open the adapter */
+				if ((fp = pcap_open_live(d->name,	// name of the device
 									65536,			// portion of the packet to capture. 
 													// 65536 grants that the whole packet will be captured on all the MACs.
 									1,				// promiscuous mode (nonzero means promiscuous)
 									1000,			// read timeout
 									errbuf			// error buffer
 								)) == NULL)
-			{
-				fprintf(stderr, "\nUnable to open the adapter. %s is not supported by Npcap\n", d->name);
-				/* Free the device list */
+				{
+					printf("\nUnable to open the adapter. %s is not supported by Npcap\n", d->name);
+					/* Free the device list */
+					pcap_freealldevs(alldevs);
+					b_open = 0;
+				}
+
+				printf("\nlistening on %s...\n", d->description);
+
+				/* At this point, we don't need any more the device list. Free it */
 				pcap_freealldevs(alldevs);
-				return -1;
+				break;
+			};
+		case 3:
+			{
+				printf("============================== The End ===============================\n");
+				system("pause");
+				return 0;
 			}
-
-			printf("\nlistening on %s...\n", d->description);
-
-			/* At this point, we don't need any more the device list. Free it */
-			pcap_freealldevs(alldevs);
-
-			break;
+		default:
+			printf("Invalid Mode Number.\n");
 		}
+		char log_file_path[PCAP_ERRBUF_SIZE] = "log.txt";
+		FILE* log_file = fopen(log_file_path, "w");
+
+		/* start the capture */
+		pcap_loop(fp, 0, packet_handler, (u_char*)log_file);
+
+		pcap_close(fp);
+		fclose(log_file);
 	}
-	printf("Enter the file name to save(max length :  100): ");
-	scanf_s("%s", save_name, 100);
-	save_file = fopen(strcat(save_name, ".txt"), "w");
+}
 
-	/* start the capture */
-	pcap_loop(fp, 0, packet_handler, (unsigned char*)save_file);
+int get_modenum()
+{
+	int mode_num;
 
-	pcap_close(fp);
-	fclose(save_file);
+	scanf_s("%d", &mode_num, 1);
 
-	system("pause");
-	return 0;
+	if (mode_num < 1 || mode_num > 3) return 0;
+
+	return mode_num;
 }

@@ -18,3 +18,15 @@ x64/Debug/basic_dump.tlog/link.write.1.tlog
 x64/Debug/PcapFile.obj
 x64/Debug/basic_dump.tlog/unsuccessfulbuild
 land_attack.pcap
+x64/Debug/basic_dump.Build.CppClean.log
+x64/Debug/basic_dump.vcxproj.FileListAbsolute.txt
+x64/Debug/CodeAnalysisResultManifest.txt
+x64/Debug/main.nativecodeanalysis.sarif
+x64/Debug/main.nativecodeanalysis.xml
+x64/Debug/main.obj
+x64/Debug/pkt_handler.nativecodeanalysis.sarif
+x64/Debug/pkt_handler.nativecodeanalysis.xml
+x64/Debug/pkt_handler.obj
+x64/Debug/vc.nativecodeanalysis.all.xml
+main.c.rej
+log.txt
