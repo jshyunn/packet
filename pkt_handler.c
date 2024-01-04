@@ -50,7 +50,7 @@ void ether_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_
 		}
 		case ETHERNET_ARP:
 		{
-			arp_handler(save_file, pkt_data + sizeof(ether_header));
+			arp_handler(pkt_data + sizeof(ether_header));
 			break;
 		}
 	}
