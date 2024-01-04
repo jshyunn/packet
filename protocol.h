@@ -4,22 +4,22 @@
 /* IP Addresss Structure */
 typedef struct _ip_addr ip_addr;
 struct _ip_addr {
-	unsigned char byte1;
-	unsigned char byte2;
-	unsigned char byte3;
-	unsigned char byte4;
+	u_char byte1;
+	u_char byte2;
+	u_char byte3;
+	u_char byte4;
 };
 
 
 /* MAC Addresss Structure */
 typedef struct _mac_addr mac_addr;
 struct _mac_addr {
-	unsigned char byte1;
-	unsigned char byte2;
-	unsigned char byte3;
-	unsigned char byte4;
-	unsigned char byte5;
-	unsigned char byte6;
+	u_char byte1;
+	u_char byte2;
+	u_char byte3;
+	u_char byte4;
+	u_char byte5;
+	u_char byte6;
 };
 
 
@@ -29,7 +29,7 @@ typedef struct _ether_header ether_header;
 struct _ether_header {
 	mac_addr dst; /* Destination MAC address */
 	mac_addr src; /* Source MAC address */
-	unsigned short type; /* Type(1byte) & Length(1byte) */
+	u_short type; /* Type(1byte) & Length(1byte) */
 };
 #pragma pack(pop)
 
@@ -42,11 +42,11 @@ struct _ether_header {
 /* ARP Header Structure */
 typedef struct _arp_header arp_header;
 struct _arp_header {
-	unsigned short hard; /*Hardware type */
-	unsigned short pro; /* Protocol type */
-	unsigned char hlen; /* Hardware address length */
-	unsigned char plen; /* Protocol address length */
-	unsigned short op; /* Opcode */
+	u_short hard; /*Hardware type */
+	u_short pro; /* Protocol type */
+	u_char hlen; /* Hardware address length */
+	u_char plen; /* Protocol address length */
+	u_short op; /* Opcode */
 	mac_addr sha; /* Source hardware address(mac address) */
 	ip_addr spa; /* Source protocol address(ip address) */
 	mac_addr dha; /* Destination hardware address(mac address) */
@@ -57,14 +57,14 @@ struct _arp_header {
 /* IP Header Structure */
 typedef struct _ip_header ip_header;
 struct _ip_header {
-	unsigned char ver_ihl; /* Version(4bits) & Internet header length(4bits) */
-	unsigned char tos; /* Type of service */
-	unsigned short tlen; /* Total length */
-	unsigned short id; /* Identification */
-	unsigned short off; /* Flags(3bits) & Fargment offset(13bits) */
-	unsigned char ttl; /* Time to live */
-	unsigned char pro; /* Protocol */
-	unsigned short checksum; /* Header Checksum */
+	u_char ver_ihl; /* Version(4bits) & Internet header length(4bits) */
+	u_char tos; /* Type of service */
+	u_short tlen; /* Total length */
+	u_short id; /* Identification */
+	u_short off; /* Flags(3bits) & Fargment offset(13bits) */
+	u_char ttl; /* Time to live */
+	u_char pro; /* Protocol */
+	u_short checksum; /* Header Checksum */
 	ip_addr src; /* Source address */
 	ip_addr dst; /* Destination address */
 };
@@ -79,11 +79,11 @@ struct _ip_header {
 /* ICMP Header Structure */
 typedef struct _icmp_header icmp_header;
 struct _icmp_header {
-	unsigned char type; /* Type */
-	unsigned char code; /* Code */
-	unsigned short checksum; /* Checksum */
-	unsigned short id; /* Identifier */
-	unsigned short seq_num; /* Sequence number */
+	u_char type; /* Type */
+	u_char code; /* Code */
+	u_short checksum; /* Checksum */
+	u_short id; /* Identifier */
+	u_short seq_num; /* Sequence number */
 };
 
 /* TYPE Field */
@@ -94,14 +94,14 @@ struct _icmp_header {
 /* TCP Header Structure */
 typedef struct _tcp_header tcp_header;
 struct _tcp_header {
-	unsigned short sport; /* Source port */
-	unsigned short dport; /* Destination port */
-	unsigned int seq_num; /* Sequence number */
-	unsigned int ack_num; /* Acknowledgement number */
-	unsigned short hlen_flags; /* Header length(4bits) & Flags(12bits) */
-	unsigned short win_size; /* Window size */
-	unsigned short checksum; /* Checksum */
-	unsigned short urgent_ptr; /* Urgent Pointer*/
+	u_short sport; /* Source port */
+	u_short dport; /* Destination port */
+	u_int seq_num; /* Sequence number */
+	u_int ack_num; /* Acknowledgement number */
+	u_short hlen_flags; /* Header length(4bits) & Flags(12bits) */
+	u_short win_size; /* Window size */
+	u_short checksum; /* Checksum */
+	u_short urgent_ptr; /* Urgent Pointer*/
 };
 
 /* Port Field */
@@ -117,8 +117,8 @@ struct _tcp_header {
 /* UDP Header Structure */
 typedef struct _udp_header udp_header;
 struct _udp_header {
-	unsigned short sport; /* Source port */
-	unsigned short dport; /* Destination port */
-	unsigned short tlen; /* Total length*/
-	unsigned short checksum; /* Checksum */
+	u_short sport; /* Source port */
+	u_short dport; /* Destination port */
+	u_short tlen; /* Total length*/
+	u_short checksum; /* Checksum */
 };

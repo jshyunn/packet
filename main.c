@@ -48,7 +48,7 @@ int main()
 
 	printf("====================== Intrusion Detection Tool ======================\n");
 
-	int b_open = 0;
+	int b_open = 1;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t* fp;
 
@@ -60,10 +60,10 @@ int main()
 		{
 		case 1:
 			{
-				char pcap_file_path[PCAP_ERRBUF_SIZE];
+				char pcap_file_path[MAX_PATH + _MAX_FNAME];
 
 				printf("Enter pcap file path: ");
-				scanf_s("%s", pcap_file_path, PCAP_ERRBUF_SIZE);
+				scanf_s("%s", pcap_file_path, MAX_PATH + _MAX_FNAME);
 
 				/* Open the capture file */
 				if ((fp = pcap_open_offline(pcap_file_path, errbuf)) == NULL)
@@ -148,7 +148,9 @@ int main()
 		default:
 			printf("Invalid Mode Number.\n");
 		}
-		char log_file_path[PCAP_ERRBUF_SIZE] = "log.txt";
+		if (b_open == 0) continue;
+
+		char log_file_path[MAX_PATH + _MAX_FNAME] = "log.txt";
 		FILE* log_file = fopen(log_file_path, "w");
 
 		/* start the capture */
