@@ -8,11 +8,11 @@ void packet_handler(u_char* save_file, const struct pcap_pkthdr* header, const u
 	if (header->len < 14) return;
 
 	printf("\n");
-	frame frame_data = frame_handler(save_file, header, pkt_data);
+	frame frame_data = frame_handler(header, pkt_data);
 	printf("\n");
 }
 
-frame frame_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
+frame frame_handler(const struct pcap_pkthdr* header, const u_char* pkt_data)
 {
 	struct tm* ltime;
 	char timestr[16];
@@ -26,7 +26,7 @@ frame frame_handler(u_char* save_file, const struct pcap_pkthdr* header, const u
 
 	frame_header hdr = { strcat(timestr, ltoa(header->ts.tv_usec, strBuffer, 10)), header->caplen, header->len };
 	//frame_body_type type;
-	frame_body body;
+	frame_body body = { 0 };
 
 	printf("=============================== Frame ================================\n");
 	printf("%s Frame Length: %d Capture Length: %d\n", hdr.arrival_time, hdr.frame_len, hdr.len);
@@ -42,7 +42,7 @@ ether ether_handler(const u_char* pkt_data)
 {
 	ether_header* hdr = (ether_header*)pkt_data;
 	ether_body_type type = ntohs(hdr->type);
-	ether_body body;
+	ether_body body = { 0 };
 
 	printf("============================== Ethernet ==============================\n");
 	printf("SRC MAC: %02x:%02x:%02x:%02x:%02x:%02x -> DST MAC: %02x:%02x:%02x:%02x:%02x:%02x Type: %04x\n",
@@ -72,7 +72,7 @@ ip ip_handler(const u_char* pkt_data)
 {
 	ip_header* hdr = (ip_header*)pkt_data;
 	ip_body_type type = hdr->pro;
-	ip_body body;
+	ip_body body = { 0 };
 
 	printf("=============================== IPv4 =================================\n");
 	printf("Version: %d\n", (int)(hdr->ver_ihl & 0xf0) / 16);
@@ -155,8 +155,7 @@ icmp icmp_handler(const u_char* pkt_data)
 
 	//if (header->len == 1514) printf("#################################### Ping of Death Occured!!!!!! ####################################\n");
 
-	pkt_data += sizeof(icmp_header);
-	icmp icmp_data = { *hdr, pkt_data };
+	icmp icmp_data = { *hdr, pkt_data + sizeof(icmp_header) };
 	return icmp_data;
 }
 
@@ -174,8 +173,7 @@ tcp tcp_handler(const u_char* pkt_data)
 
 	//if (tcp->win_size == 0) printf("#################################### Slow Read Occured!!!!!! ####################################\n");
 
-	pkt_data += (int)(hdr->hlen_flags & 0x00ff) / 16 * 4;
-	tcp tcp_data = { *hdr, pkt_data };
+	tcp tcp_data = { *hdr, pkt_data + (int)(hdr->hlen_flags & 0x00ff) / 16 * 4 };
 	return tcp_data;
 }
 
@@ -189,8 +187,7 @@ udp udp_handler(const u_char* pkt_data)
 
 	//if (header->len == 1514) printf("#################################### UDP Flood Occured!!!!!! ####################################\n");
 
-	pkt_data += sizeof(udp_header);
-	udp udp_data = { *hdr, pkt_data };
+	udp udp_data = { *hdr, pkt_data + sizeof(udp_header) };
 	return udp_data;
 }
 

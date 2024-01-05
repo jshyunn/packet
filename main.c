@@ -55,9 +55,8 @@ int main()
 		printf("\n[1] Offline\n[2] Live\n[3] Exit\n");
 		printf("Enter the mode: ");
 		
-		scanf_s("%d", &mode_num, 1);
-
-		if (mode_num < 1 || mode_num > 3) continue;
+		rewind(stdin);
+		scanf_s("%d", &mode_num, 10);
 
 		switch (mode_num)
 		{
@@ -66,6 +65,7 @@ int main()
 			char pcap_file_path[MAX_PATH + _MAX_FNAME];
 
 				printf("Enter pcap file path: ");
+				rewind(stdin);
 				scanf_s("%s", pcap_file_path, MAX_PATH + _MAX_FNAME);
 
 				/* Open the capture file */
@@ -107,6 +107,7 @@ int main()
 				}
 
 				printf("Enter the interface number (1-%d):", i);
+				rewind(stdin);
 				scanf_s("%d", &inum, 1);
 
 				if (inum < 1 || inum > i)
