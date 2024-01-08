@@ -30,3 +30,15 @@ x64/Debug/pkt_handler.obj
 x64/Debug/vc.nativecodeanalysis.all.xml
 main.c.rej
 log.txt
+x64/Debug/atk_detector.obj
+x64/Debug/basic_ids.exe.recipe
+x64/Debug/basic_ids.ilk
+x64/Debug/pkt_io.obj
+x64/Debug/basic_ids.tlog/basic_ids.lastbuildstate
+x64/Debug/basic_ids.tlog/CL.command.1.tlog
+x64/Debug/basic_ids.tlog/Cl.items.tlog
+x64/Debug/basic_ids.tlog/CL.read.1.tlog
+x64/Debug/basic_ids.tlog/CL.write.1.tlog
+x64/Debug/basic_ids.tlog/link.command.1.tlog
+x64/Debug/basic_ids.tlog/link.read.1.tlog
+x64/Debug/basic_ids.tlog/link.write.1.tlog

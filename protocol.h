@@ -23,20 +23,26 @@ struct _mac_addr {
 };
 
 
+/* Frame Header Structure */
+typedef struct _frame_header frame_header;
+struct _frame_header {
+	char* arrival_time;
+	u_int frame_len;
+	u_int len;
+};
+
+
 /* Ethernet Header Structure */
-#pragma pack(push, 1)
 typedef struct _ether_header ether_header;
 struct _ether_header {
 	mac_addr dst; /* Destination MAC address */
 	mac_addr src; /* Source MAC address */
 	u_short type; /* Type(1byte) & Length(1byte) */
 };
-#pragma pack(pop)
 
 /* TYPE Field */
 #define ETHERNET_IP 0x0800
 #define ETHERNET_ARP 0x0806
-#define ETHERNET_RARP 0x0835
 
 
 /* ARP Header Structure */
@@ -113,6 +119,7 @@ struct _tcp_header {
 #define TCP_POP3 110
 #define TCP_IMAP4 143
 #define TCP_HTTPS 443
+
 
 /* UDP Header Structure */
 typedef struct _udp_header udp_header;

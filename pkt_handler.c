@@ -3,8 +3,6 @@
 #include "protocol.h"
 #include "pkt_handler.h"
 
-#define LINE_LEN 16
-
 /* Callback function invoked by libpcap for every incoming packet */
 void packet_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
 {
@@ -72,6 +70,8 @@ void ip_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_cha
 		ip->src.byte1, ip->src.byte2, ip->src.byte3, ip->src.byte4,
 		ip->dst.byte1, ip->dst.byte2, ip->dst.byte3, ip->dst.byte4);
 
+	if (!memcmp(&ip->src, &ip->dst, sizeof(ip_addr))) printf("#################################### Land Attack Occured!!!!!! ####################################\n");
+
 	struct tm* ltime;
 	char timestr[16];
 	time_t local_tv_sec;
@@ -92,23 +92,23 @@ void ip_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_cha
 	{
 		case IP_ICMP:
 		{
-			icmp_handler(save_file, de_pkt_data);
+			icmp_handler(header, de_pkt_data);
 			break;
 		}
 		case IP_TCP:
 		{
-			tcp_handler(save_file, de_pkt_data);
+			tcp_handler(header, de_pkt_data);
 			break;
 		}
 		case IP_UDP:
 		{
-			udp_handler(save_file, de_pkt_data);
+			udp_handler(header, de_pkt_data);
 			break;
 		}
 	}
 }
 
-void arp_handler(u_char* save_file, const u_char* pkt_data)
+void arp_handler(const u_char* pkt_data)
 {
 	arp_header* arp = (arp_header*)pkt_data;
 	printf("================================ ARP =================================\n");
@@ -126,7 +126,7 @@ void arp_handler(u_char* save_file, const u_char* pkt_data)
 }
 
 
-void icmp_handler(u_char* save_file, const u_char* pkt_data)
+void icmp_handler(const struct pcap_pkthdr* header, const u_char* pkt_data)
 {
 	icmp_header* icmp = (icmp_header*)pkt_data;
 	printf("================================ ICMP ================================\n");
@@ -134,14 +134,13 @@ void icmp_handler(u_char* save_file, const u_char* pkt_data)
 	printf("Code: %02x\n", icmp->code);
 	printf("Checksum: %04x\n", ntohs(icmp->checksum));
 
-	/*fprintf(save_file, "Type: %02x\n", icmp->type);
-	fprintf(save_file, "Code: %02x\n", icmp->code);
-	fprintf(save_file, "Checksum: %04x\n", ntohs(icmp->checksum));*/
+	if (header->len == 1514) printf("#################################### Ping of Death Occured!!!!!! ####################################\n");
 
-	data_handler(save_file, pkt_data + sizeof(icmp_header));
+	data_handler(pkt_data + sizeof(icmp_header));
 }
 
-void tcp_handler(u_char* save_file, const u_char* pkt_data)
+
+void tcp_handler(const struct pcap_pkthdr* header, const u_char* pkt_data)
 {
 	tcp_header* tcp = (tcp_header*)pkt_data;
 	printf("================================ TCP =================================\n");
@@ -153,10 +152,12 @@ void tcp_handler(u_char* save_file, const u_char* pkt_data)
 	printf("Checksum: %04x\n", ntohs(tcp->checksum));
 	printf("Urgent Pointer: %04x\n", ntohs(tcp->urgent_ptr));
 
-	data_handler(save_file, pkt_data + (int)(tcp->hlen_flags & 0x00ff) / 16 * 4);
+	if (tcp->win_size == 0) printf("#################################### Slow Read Occured!!!!!! ####################################\n");
+
+	data_handler(pkt_data + (int)(tcp->hlen_flags & 0x00ff) / 16 * 4);
 }
 
-void udp_handler(u_char* save_file, const u_char* pkt_data)
+void udp_handler(const struct pcap_pkthdr* header, const u_char* pkt_data)
 {
 	udp_header* udp = (udp_header*)pkt_data;
 	printf("================================ UDP =================================\n");
@@ -164,10 +165,12 @@ void udp_handler(u_char* save_file, const u_char* pkt_data)
 	printf("Total Length: %d\n", ntohs(udp->tlen));
 	printf("Checksum: %04x\n", ntohs(udp->checksum));
 
-	data_handler(save_file, pkt_data + sizeof(udp_header));
+	if (header->len == 1514) printf("#################################### UDP Flood Occured!!!!!! ####################################\n");
+
+	data_handler(pkt_data + sizeof(udp_header));
 }
 
-void data_handler(u_char* save_file, const u_char* pkt_data)
+void data_handler(const u_char* pkt_data)
 {
 	printf("================================ DATA ================================\n");
 	printf("%s\n", pkt_data);
