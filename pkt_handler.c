@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <time.h>
-#include "protocol.h"
 #include "pkt_handler.h"
 
 /* Callback function invoked by libpcap for every incoming packet */
@@ -9,75 +8,93 @@ void packet_handler(u_char* save_file, const struct pcap_pkthdr* header, const u
 	if (header->len < 14) return;
 
 	printf("\n");
-	frame_handler(save_file, header, pkt_data);
+	frame frame_data = frame_handler(save_file, header, pkt_data);
 	printf("\n");
 }
 
-void frame_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
+frame frame_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
 {
 	struct tm* ltime;
 	char timestr[16];
+	char strBuffer[10];
 	time_t local_tv_sec;
 
 	/* convert the timestamp to readable format */
 	local_tv_sec = header->ts.tv_sec;
 	ltime = localtime(&local_tv_sec);
-	strftime(timestr, sizeof timestr, "%H:%M:%S", ltime);
+	strftime(timestr, sizeof timestr, "%H:%M:%S.", ltime);
+
+	frame_header hdr = { strcat(timestr, ltoa(header->ts.tv_usec, strBuffer, 10)), header->caplen, header->len };
+	//frame_body_type type;
+	frame_body body;
 
 	printf("=============================== Frame ================================\n");
-	printf("%s,%.6d Frame Length: %d Capture Length: %d\n", timestr, header->ts.tv_usec, header->caplen, header->len);
+	printf("%s Frame Length: %d Capture Length: %d\n", hdr.arrival_time, hdr.frame_len, hdr.len);
 
-	ether_handler(save_file, header, pkt_data);
+	
+
+	body.ether_data = ether_handler(pkt_data);
+	frame frame_data = { hdr, body };
+	return frame_data;
 }
 
-void ether_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
+ether ether_handler(const u_char* pkt_data)
 {
-	ether_header* pEther = (ether_header*)pkt_data;
+	ether_header* hdr = (ether_header*)pkt_data;
+	ether_body_type type = ntohs(hdr->type);
+	ether_body body;
+
 	printf("============================== Ethernet ==============================\n");
 	printf("SRC MAC: %02x:%02x:%02x:%02x:%02x:%02x -> DST MAC: %02x:%02x:%02x:%02x:%02x:%02x Type: %04x\n",
-		pEther->src.byte1, pEther->src.byte2, pEther->src.byte3, pEther->src.byte4, pEther->src.byte5, pEther->src.byte6,
-		pEther->dst.byte1, pEther->dst.byte2, pEther->dst.byte3, pEther->dst.byte4, pEther->dst.byte5, pEther->dst.byte6,
-		ntohs(pEther->type));
+		hdr->src.byte1, hdr->src.byte2, hdr->src.byte3, hdr->src.byte4, hdr->src.byte5, hdr->src.byte6,
+		hdr->dst.byte1, hdr->dst.byte2, hdr->dst.byte3, hdr->dst.byte4, hdr->dst.byte5, hdr->dst.byte6,
+		ntohs(hdr->type));
 
-	switch (ntohs(pEther->type))
+	pkt_data += sizeof(ether_header);
+	switch (type)
 	{
-		case ETHERNET_IP:
+		case IP:
 		{
-			ip_handler(save_file, header, pkt_data + sizeof(ether_header));
+			body.ip_data = ip_handler(pkt_data);
 			break;
 		}
-		case ETHERNET_ARP:
+		case ARP:
 		{
-			arp_handler(pkt_data + sizeof(ether_header));
+			body.arp_data = arp_handler(pkt_data);
 			break;
 		}
 	}
+	ether ether_data = { *hdr, body };
+	return ether_data;
 }
 
-void ip_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
+ip ip_handler(const u_char* pkt_data)
 {
-	ip_header* ip = (ip_header*)pkt_data;
+	ip_header* hdr = (ip_header*)pkt_data;
+	ip_body_type type = hdr->pro;
+	ip_body body;
+
 	printf("=============================== IPv4 =================================\n");
-	printf("Version: %d\n", (int)(ip->ver_ihl & 0xf0) / 16);
-	printf("Internet Header Length: %d\n", (int)(ip->ver_ihl & 0x0f) * 4);
-	printf("Type of Service: %02x\n", ip->tos);
-	printf("Total Length: %d\n", ntohs(ip->tlen));
-	printf("Identification: %04x\n", ntohs(ip->id));
-	printf("Time to Live: %d\n", ip->ttl);
-	printf("Protocol: %d\n", ip->pro);
-	printf("Header Checksum : %04x\n", ntohs(ip->checksum));
+	printf("Version: %d\n", (int)(hdr->ver_ihl & 0xf0) / 16);
+	printf("Internet Header Length: %d\n", (int)(hdr->ver_ihl & 0x0f) * 4);
+	printf("Type of Service: %02x\n", hdr->tos);
+	printf("Total Length: %d\n", ntohs(hdr->tlen));
+	printf("Identification: %04x\n", ntohs(hdr->id));
+	printf("Time to Live: %d\n", hdr->ttl);
+	printf("Protocol: %d\n", hdr->pro);
+	printf("Header Checksum : %04x\n", ntohs(hdr->checksum));
 	printf("SRC IP: %d.%d.%d.%d -> DST IP: %d.%d.%d.%d\n",
-		ip->src.byte1, ip->src.byte2, ip->src.byte3, ip->src.byte4,
-		ip->dst.byte1, ip->dst.byte2, ip->dst.byte3, ip->dst.byte4);
+		hdr->src.byte1, hdr->src.byte2, hdr->src.byte3, hdr->src.byte4,
+		hdr->dst.byte1, hdr->dst.byte2, hdr->dst.byte3, hdr->dst.byte4);
 
-	if (!memcmp(&ip->src, &ip->dst, sizeof(ip_addr))) printf("#################################### Land Attack Occured!!!!!! ####################################\n");
+	//if (!memcmp(&ip->src, &ip->dst, sizeof(ip_addr))) printf("#################################### Land Attack Occured!!!!!! ####################################\n");
 
-	struct tm* ltime;
+	/*struct tm* ltime;
 	char timestr[16];
-	time_t local_tv_sec;
+	time_t local_tv_sec;*/
 
 	/* convert the timestamp to readable format */
-	local_tv_sec = header->ts.tv_sec;
+	/*local_tv_sec = header->ts.tv_sec;
 	ltime = localtime(&local_tv_sec);
 	strftime(timestr, sizeof timestr, "%H:%M:%S", ltime);
 	fprintf(save_file, "%s\t%d.%d.%d.%d\t%d.%d.%d.%d\t%s\t%d\n",
@@ -85,89 +102,96 @@ void ip_handler(u_char* save_file, const struct pcap_pkthdr* header, const u_cha
 		ip->src.byte1, ip->src.byte2, ip->src.byte3, ip->src.byte4,
 		ip->dst.byte1, ip->dst.byte2, ip->dst.byte3, ip->dst.byte4,
 		convert_protocol(ip->pro),
-		header->len);
+		header->len);*/
 
-	const u_char* de_pkt_data = (pkt_data + (int)(ip->ver_ihl & 0x0f) * 4);
-	switch (ip->pro)
+	pkt_data += (int)(hdr->ver_ihl & 0x0f) * 4;
+	switch (type)
 	{
-		case IP_ICMP:
+		case ICMP:
 		{
-			icmp_handler(header, de_pkt_data);
+			body.icmp_data = icmp_handler(pkt_data);
 			break;
 		}
-		case IP_TCP:
+		case TCP:
 		{
-			tcp_handler(header, de_pkt_data);
+			body.tcp_data = tcp_handler(pkt_data);
 			break;
 		}
-		case IP_UDP:
+		case UDP:
 		{
-			udp_handler(header, de_pkt_data);
+			body.udp_data = udp_handler(pkt_data);
 			break;
 		}
 	}
+	ip ip_data = { *hdr, body };
+	return ip_data;
 }
 
-void arp_handler(const u_char* pkt_data)
+arp arp_handler(const u_char* pkt_data)
 {
-	arp_header* arp = (arp_header*)pkt_data;
+	arp* pkt = (arp*)pkt_data;
 	printf("================================ ARP =================================\n");
-	printf("Hardware Type: %04x\n", ntohs(arp->hard));
-	printf("Protocol Type: %04x\n", ntohs(arp->pro));
-	printf("Hardware Size: %d\n", arp->hlen);
-	printf("Protocol Size: %d\n", arp->plen);
-	printf("Opcode: %04x\n", arp->op);
+	printf("Hardware Type: %04x\n", ntohs(pkt->hard));
+	printf("Protocol Type: %04x\n", ntohs(pkt->pro));
+	printf("Hardware Size: %d\n", pkt->hlen);
+	printf("Protocol Size: %d\n", pkt->plen);
+	printf("Opcode: %04x\n", pkt->op);
 	printf("Sender MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n",
-		arp->sha.byte1, arp->sha.byte2, arp->sha.byte3, arp->sha.byte4, arp->sha.byte5, arp->sha.byte6);
-	printf("Sender IP Address: %d.%d.%d.%d\n", arp->spa.byte1, arp->spa.byte2, arp->spa.byte3, arp->spa.byte4);
+		pkt->sha.byte1, pkt->sha.byte2, pkt->sha.byte3, pkt->sha.byte4, pkt->sha.byte5, pkt->sha.byte6);
+	printf("Sender IP Address: %d.%d.%d.%d\n", pkt->spa.byte1, pkt->spa.byte2, pkt->spa.byte3, pkt->spa.byte4);
 	printf("Target MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n",
-		arp->dha.byte1, arp->dha.byte2, arp->dha.byte3, arp->dha.byte4, arp->dha.byte5, arp->dha.byte6);
-	printf("Target IP Address: %d.%d.%d.%d\n", arp->dpa.byte1, arp->dpa.byte2, arp->dpa.byte3, arp->dpa.byte4);
+		pkt->dha.byte1, pkt->dha.byte2, pkt->dha.byte3, pkt->dha.byte4, pkt->dha.byte5, pkt->dha.byte6);
+	printf("Target IP Address: %d.%d.%d.%d\n", pkt->dpa.byte1, pkt->dpa.byte2, pkt->dpa.byte3, pkt->dpa.byte4);
+	return *pkt;
 }
 
-
-void icmp_handler(const struct pcap_pkthdr* header, const u_char* pkt_data)
+icmp icmp_handler(const u_char* pkt_data)
 {
-	icmp_header* icmp = (icmp_header*)pkt_data;
+	icmp_header* hdr = (icmp_header*)pkt_data;
 	printf("================================ ICMP ================================\n");
-	printf("Type: %02x\n", icmp->type);
-	printf("Code: %02x\n", icmp->code);
-	printf("Checksum: %04x\n", ntohs(icmp->checksum));
+	printf("Type: %02x\n", hdr->type);
+	printf("Code: %02x\n", hdr->code);
+	printf("Checksum: %04x\n", ntohs(hdr->checksum));
 
-	if (header->len == 1514) printf("#################################### Ping of Death Occured!!!!!! ####################################\n");
+	//if (header->len == 1514) printf("#################################### Ping of Death Occured!!!!!! ####################################\n");
 
-	data_handler(pkt_data + sizeof(icmp_header));
+	pkt_data += sizeof(icmp_header);
+	icmp icmp_data = { *hdr, pkt_data };
+	return icmp_data;
 }
 
-
-void tcp_handler(const struct pcap_pkthdr* header, const u_char* pkt_data)
+tcp tcp_handler(const u_char* pkt_data)
 {
-	tcp_header* tcp = (tcp_header*)pkt_data;
+	tcp_header* hdr = (tcp_header*)pkt_data;
 	printf("================================ TCP =================================\n");
-	printf("SRC Port: %d -> DST Port: %d\n", ntohs(tcp->sport), ntohs(tcp->dport));
-	printf("Seq: %08x, Ack: %08x\n", ntohs(tcp->seq_num), ntohs(tcp->ack_num));
-	printf("Header Len: %d\n", (int)(tcp->hlen_flags & 0x00ff) / 16 * 4);
-	printf("Flags: %03x\n", ntohs(tcp->hlen_flags) & 0x0fff);
-	printf("Window Size: %d\n", ntohs(tcp->win_size));
-	printf("Checksum: %04x\n", ntohs(tcp->checksum));
-	printf("Urgent Pointer: %04x\n", ntohs(tcp->urgent_ptr));
+	printf("SRC Port: %d -> DST Port: %d\n", ntohs(hdr->sport), ntohs(hdr->dport));
+	printf("Seq: %08x, Ack: %08x\n", ntohs(hdr->seq_num), ntohs(hdr->ack_num));
+	printf("Header Len: %d\n", (int)(hdr->hlen_flags & 0x00ff) / 16 * 4);
+	printf("Flags: %03x\n", ntohs(hdr->hlen_flags) & 0x0fff);
+	printf("Window Size: %d\n", ntohs(hdr->win_size));
+	printf("Checksum: %04x\n", ntohs(hdr->checksum));
+	printf("Urgent Pointer: %04x\n", ntohs(hdr->urgent_ptr));
 
-	if (tcp->win_size == 0) printf("#################################### Slow Read Occured!!!!!! ####################################\n");
+	//if (tcp->win_size == 0) printf("#################################### Slow Read Occured!!!!!! ####################################\n");
 
-	data_handler(pkt_data + (int)(tcp->hlen_flags & 0x00ff) / 16 * 4);
+	pkt_data += (int)(hdr->hlen_flags & 0x00ff) / 16 * 4;
+	tcp tcp_data = { *hdr, pkt_data };
+	return tcp_data;
 }
 
-void udp_handler(const struct pcap_pkthdr* header, const u_char* pkt_data)
+udp udp_handler(const u_char* pkt_data)
 {
-	udp_header* udp = (udp_header*)pkt_data;
+	udp_header* hdr = (udp_header*)pkt_data;
 	printf("================================ UDP =================================\n");
-	printf("SRC Port: %d -> DST Port: %d\n", ntohs(udp->sport), ntohs(udp->dport));
-	printf("Total Length: %d\n", ntohs(udp->tlen));
-	printf("Checksum: %04x\n", ntohs(udp->checksum));
+	printf("SRC Port: %d -> DST Port: %d\n", ntohs(hdr->sport), ntohs(hdr->dport));
+	printf("Total Length: %d\n", ntohs(hdr->tlen));
+	printf("Checksum: %04x\n", ntohs(hdr->checksum));
 
-	if (header->len == 1514) printf("#################################### UDP Flood Occured!!!!!! ####################################\n");
+	//if (header->len == 1514) printf("#################################### UDP Flood Occured!!!!!! ####################################\n");
 
-	data_handler(pkt_data + sizeof(udp_header));
+	pkt_data += sizeof(udp_header);
+	udp udp_data = { *hdr, pkt_data };
+	return udp_data;
 }
 
 void data_handler(const u_char* pkt_data)
@@ -176,7 +200,7 @@ void data_handler(const u_char* pkt_data)
 	printf("%s\n", pkt_data);
 }
 
-char* convert_protocol(const u_char pro)
+/*char* convert_protocol(const u_char pro)
 {
 	char* protocol_name = "NULL";
 	switch ((int)pro)
@@ -198,4 +222,4 @@ char* convert_protocol(const u_char pro)
 		}
 	}
 	return protocol_name;
-}
+}*/

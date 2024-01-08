@@ -23,31 +23,85 @@ struct _mac_addr {
 };
 
 
-/* Frame Header Structure */
-typedef struct _frame_header frame_header;
-struct _frame_header {
-	char* arrival_time;
-	u_int frame_len;
-	u_int len;
-};
-
-
-/* Ethernet Header Structure */
-typedef struct _ether_header ether_header;
-struct _ether_header {
-	mac_addr dst; /* Destination MAC address */
-	mac_addr src; /* Source MAC address */
-	u_short type; /* Type(1byte) & Length(1byte) */
+/* ICMP Header Structure */
+typedef struct _icmp_header icmp_header;
+struct _icmp_header {
+	u_char type; /* Type */
+	u_char code; /* Code */
+	u_short checksum; /* Checksum */
+	u_short id; /* Identifier */
+	u_short seq_num; /* Sequence number */
 };
 
 /* TYPE Field */
-#define ETHERNET_IP 0x0800
-#define ETHERNET_ARP 0x0806
+typedef enum _icmp_body_type icmp_body_type;
+enum _icmp_body_type {
+	ICMP_ECHO_REP = 0, /* Echo reply */
+	ICMP_ECHO_REQ = 8 /* Echo request */
+};
+
+/* ICMP Structure*/
+typedef struct _icmp icmp;
+struct _icmp {
+	icmp_header header;
+	u_char* body;
+};
 
 
-/* ARP Header Structure */
-typedef struct _arp_header arp_header;
-struct _arp_header {
+/* TCP Header Structure */
+typedef struct _tcp_header tcp_header;
+struct _tcp_header {
+	u_short sport; /* Source port */
+	u_short dport; /* Destination port */
+	u_int seq_num; /* Sequence number */
+	u_int ack_num; /* Acknowledgement number */
+	u_short hlen_flags; /* Header length(4bits) & Flags(12bits) */
+	u_short win_size; /* Window size */
+	u_short checksum; /* Checksum */
+	u_short urgent_ptr; /* Urgent Pointer*/
+};
+
+/* Port Field */
+typedef enum _tcp_port_type tcp_port_type;
+enum _tcp_port_type {
+	FTP = 20,
+	SSH = 22,
+	TELNET = 23,
+	SMTP = 25,
+	HTTP = 80,
+	POP3 = 110,
+	IMAP4 = 143,
+	HTTPS = 443
+};
+
+/* TCP Structure */
+typedef struct _tcp tcp;
+struct _tcp {
+	tcp_header header;
+	u_char* body;
+};
+
+
+/* UDP Header Structure */
+typedef struct _udp_header udp_header;
+struct _udp_header {
+	u_short sport; /* Source port */
+	u_short dport; /* Destination port */
+	u_short tlen; /* Total length*/
+	u_short checksum; /* Checksum */
+};
+
+/* UDP Structure */
+typedef struct _udp udp;
+struct _udp {
+	udp_header header;
+	u_char* body;
+};
+
+
+/* ARP Structure */
+typedef struct _arp arp;
+struct _arp {
 	u_short hard; /*Hardware type */
 	u_short pro; /* Protocol type */
 	u_char hlen; /* Hardware address length */
@@ -75,57 +129,84 @@ struct _ip_header {
 	ip_addr dst; /* Destination address */
 };
 
-/* Protocol Field */
-#define IP_ICMP 0x0001
-#define IP_IGMP 0x0002
-#define IP_TCP 0x0006
-#define IP_UDP 0x0011
-
-
-/* ICMP Header Structure */
-typedef struct _icmp_header icmp_header;
-struct _icmp_header {
-	u_char type; /* Type */
-	u_char code; /* Code */
-	u_short checksum; /* Checksum */
-	u_short id; /* Identifier */
-	u_short seq_num; /* Sequence number */
+/* IP Body Structure */
+typedef struct _ip_body ip_body;
+struct _ip_body {
+	icmp icmp_data;
+	tcp tcp_data;
+	udp udp_data;
 };
 
-/* TYPE Field */
-#define ICMP_ECHO_REP 0 /* Echo reply */
-#define ICMP_ECHO_REQ 8 /* Echo request */
-
-
-/* TCP Header Structure */
-typedef struct _tcp_header tcp_header;
-struct _tcp_header {
-	u_short sport; /* Source port */
-	u_short dport; /* Destination port */
-	u_int seq_num; /* Sequence number */
-	u_int ack_num; /* Acknowledgement number */
-	u_short hlen_flags; /* Header length(4bits) & Flags(12bits) */
-	u_short win_size; /* Window size */
-	u_short checksum; /* Checksum */
-	u_short urgent_ptr; /* Urgent Pointer*/
+/* Type Field */
+typedef enum _ip_type ip_body_type;
+enum _ip_type {
+	ICMP = 0x0001,
+	IGMP = 0x0002,
+	TCP = 0x0006,
+	UDP = 0x0011
 };
 
-/* Port Field */
-#define TCP_FTP 20
-#define TCP_SSH 22
-#define TCP_TELNET 23
-#define TCP_SMTP 25
-#define TCP_HTTP 80
-#define TCP_POP3 110
-#define TCP_IMAP4 143
-#define TCP_HTTPS 443
+/* IP Structure */
+typedef struct _ip ip;
+struct _ip {
+	ip_header header;
+	ip_body body;
+};
 
 
-/* UDP Header Structure */
-typedef struct _udp_header udp_header;
-struct _udp_header {
-	u_short sport; /* Source port */
-	u_short dport; /* Destination port */
-	u_short tlen; /* Total length*/
-	u_short checksum; /* Checksum */
+/* Ethernet Header Structure */
+typedef struct _ether_header ether_header;
+struct _ether_header {
+	mac_addr dst; /* Destination MAC address */
+	mac_addr src; /* Source MAC address */
+	u_short type; /* Type(1byte) & Length(1byte) */
+};
+
+/* Ethernet Body Structure */
+typedef struct _ether_body ether_body;
+struct _ether_body {
+	ip ip_data;
+	arp arp_data;
+};
+
+/* Type Field */
+typedef enum _ether_body_type ether_body_type;
+enum _ether_body_type {
+	IP = 0x0800,
+	ARP = 0x0806
+};
+
+/* Ethernet Structure */
+typedef struct _ether ether;
+struct _ether {
+	ether_header header;
+	ether_body body;
+};
+
+
+/* Frame Header Structure */
+typedef struct _frame_header frame_header;
+struct _frame_header {
+	u_char* arrival_time;
+	u_int frame_len;
+	u_int len;
+};
+
+/* Frame Body Structure */
+typedef struct _frame_body frame_body;
+struct _frame_body {
+	ether ether_data;
+};
+
+/* Type Field */
+typedef enum _frame_body_type frame_body_type;
+enum _frame_body_type {
+	ETHERNET = 1
+};
+
+/* Frame Structure */
+typedef struct _frame frame;
+struct _frame {
+	frame_header header;
+	frame_body body;
 };

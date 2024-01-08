@@ -33,8 +33,6 @@ BOOL LoadNpcapDlls() // Npcap을 설치했는지 확인하는 함수
 }
 #endif
 
-int get_modenum();
-
 int main()
 {
 #ifdef _WIN32
@@ -46,21 +44,26 @@ int main()
 	}
 #endif
 
-	printf("====================== Intrusion Detection Tool ======================\n");
+	printf("====================== Intrusion Detection Tool ======================");
 
-	int b_open = 1;
 	char errbuf[PCAP_ERRBUF_SIZE];
 	pcap_t* fp;
 
 	while (1) {
-		printf("[1] Offline\n[2] Live\n[3] Exit\n");
+		int b_open = 1;
+		int mode_num;
+		printf("\n[1] Offline\n[2] Live\n[3] Exit\n");
 		printf("Enter the mode: ");
+		
+		scanf_s("%d", &mode_num, 1);
 
-		switch (get_modenum())
+		if (mode_num < 1 || mode_num > 3) continue;
+
+		switch (mode_num)
 		{
 		case 1:
 			{
-				char pcap_file_path[MAX_PATH + _MAX_FNAME];
+			char pcap_file_path[MAX_PATH + _MAX_FNAME];
 
 				printf("Enter pcap file path: ");
 				scanf_s("%s", pcap_file_path, MAX_PATH + _MAX_FNAME);
@@ -147,6 +150,7 @@ int main()
 			}
 		default:
 			printf("Invalid Mode Number.\n");
+			b_open = 0;
 		}
 		if (b_open == 0) continue;
 
@@ -159,15 +163,4 @@ int main()
 		pcap_close(fp);
 		fclose(log_file);
 	}
-}
-
-int get_modenum()
-{
-	int mode_num;
-
-	scanf_s("%d", &mode_num, 1);
-
-	if (mode_num < 1 || mode_num > 3) return 0;
-
-	return mode_num;
 }
