@@ -29,15 +29,6 @@ struct _icmp_header {
 	u_char type; /* Type */
 	u_char code; /* Code */
 	u_short checksum; /* Checksum */
-	u_short id; /* Identifier */
-	u_short seq_num; /* Sequence number */
-};
-
-/* TYPE Field */
-typedef enum _icmp_body_type icmp_body_type;
-enum _icmp_body_type {
-	ICMP_ECHO_REP = 0, /* Echo reply */
-	ICMP_ECHO_REQ = 8 /* Echo request */
 };
 
 /* ICMP Structure*/
@@ -55,23 +46,10 @@ struct _tcp_header {
 	u_short dport; /* Destination port */
 	u_int seq_num; /* Sequence number */
 	u_int ack_num; /* Acknowledgement number */
-	u_short hlen_flags; /* Header length(4bits) & Flags(12bits) */
+	u_short hlen_flags ; /* Header length(4bits) & Flags(12bits) */
 	u_short win_size; /* Window size */
 	u_short checksum; /* Checksum */
 	u_short urgent_ptr; /* Urgent Pointer*/
-};
-
-/* Port Field */
-typedef enum _tcp_port_type tcp_port_type;
-enum _tcp_port_type {
-	FTP = 20,
-	SSH = 22,
-	TELNET = 23,
-	SMTP = 25,
-	HTTP = 80,
-	POP3 = 110,
-	IMAP4 = 143,
-	HTTPS = 443
 };
 
 /* TCP Structure */
@@ -141,7 +119,6 @@ struct _ip_body {
 typedef enum _ip_type ip_body_type;
 enum _ip_type {
 	ICMP = 0x0001,
-	IGMP = 0x0002,
 	TCP = 0x0006,
 	UDP = 0x0011
 };
@@ -151,6 +128,7 @@ typedef struct _ip ip;
 struct _ip {
 	ip_header header;
 	ip_body body;
+	ip_body_type type;
 };
 
 
@@ -172,8 +150,10 @@ struct _ether_body {
 /* Type Field */
 typedef enum _ether_body_type ether_body_type;
 enum _ether_body_type {
-	IP = 0x0800,
-	ARP = 0x0806
+	IPv4 = 0x0800,
+	ARP = 0x0806,
+	RARP = 0x8035,
+	IPv6 = 0x86dd
 };
 
 /* Ethernet Structure */
@@ -181,13 +161,14 @@ typedef struct _ether ether;
 struct _ether {
 	ether_header header;
 	ether_body body;
+	ether_body_type type;
 };
 
 
 /* Frame Header Structure */
 typedef struct _frame_header frame_header;
 struct _frame_header {
-	u_char* arrival_time;
+	char arrival_time[18]; 
 	u_int frame_len;
 	u_int len;
 };
@@ -196,12 +177,6 @@ struct _frame_header {
 typedef struct _frame_body frame_body;
 struct _frame_body {
 	ether ether_data;
-};
-
-/* Type Field */
-typedef enum _frame_body_type frame_body_type;
-enum _frame_body_type {
-	ETHERNET = 1
 };
 
 /* Frame Structure */

@@ -195,10 +195,12 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="pkt_io.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="pkt_handler.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="pkt_io.h" />
     <ClInclude Include="pkt_handler.h" />
     <ClInclude Include="protocol.h" />
   </ItemGroup>

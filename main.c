@@ -62,11 +62,11 @@ int main()
 		{
 		case 1:
 			{
-			char pcap_file_path[MAX_PATH + _MAX_FNAME];
+			char pcap_file_path[MAX_PATH + _MAX_FNAME] = "C://Users//TJ//Desktop//npcap-sdk-1.13//Examples-pcap//basic_dump//test.pcap";
 
 				printf("Enter pcap file path: ");
-				rewind(stdin);
-				scanf_s("%s", pcap_file_path, MAX_PATH + _MAX_FNAME);
+				/*rewind(stdin);
+				scanf_s("%s", pcap_file_path, MAX_PATH + _MAX_FNAME);*/
 
 				/* Open the capture file */
 				if ((fp = pcap_open_offline(pcap_file_path, errbuf)) == NULL)
