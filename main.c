@@ -62,7 +62,7 @@ int main()
 		{
 		case 1:
 			{
-			char pcap_file_path[MAX_PATH + _MAX_FNAME] = "C://Users//TJ//Desktop//npcap-sdk-1.13//Examples-pcap//basic_dump//test.pcap";
+			char pcap_file_path[MAX_PATH + _MAX_FNAME] = "C://Users//TJ//Desktop//npcap-sdk-1.13//Examples-pcap//basic_dump//land_attack.pcap";
 
 				printf("Enter pcap file path: ");
 				/*rewind(stdin);

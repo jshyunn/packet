@@ -128,7 +128,7 @@ typedef struct _ip ip;
 struct _ip {
 	ip_header header;
 	ip_body body;
-	ip_body_type type;
+	ip_body_type body_type;
 };
 
 
@@ -161,7 +161,7 @@ typedef struct _ether ether;
 struct _ether {
 	ether_header header;
 	ether_body body;
-	ether_body_type type;
+	ether_body_type body_type;
 };
 
 

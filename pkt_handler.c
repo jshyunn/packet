@@ -2,14 +2,15 @@
 #include <time.h>
 #include "pkt_handler.h"
 #include "pkt_io.h"
+#include "atk_detector.h"
 
 /* Callback function invoked by libpcap for every incoming packet */
 void packet_handler(u_char* log_file, const struct pcap_pkthdr* header, const u_char* pkt_data)
 {
 	if (header->len < 14) return;
 
-	printf("\n");
 	frame frame_data = frame_handler(header, pkt_data);
+	printf("\n");
 	print_frame_data(&frame_data.header);
 	print_ether_data(&frame_data.body.ether_data.header);
 	print_l3_data(&frame_data.body.ether_data);
@@ -18,14 +19,7 @@ void packet_handler(u_char* log_file, const struct pcap_pkthdr* header, const u_
 
 	fprint((FILE*)log_file, &frame_data);
 
-
-
-		//if (!memcmp(&ip->src, &ip->dst, sizeof(ip_addr))) printf("#################################### Land Attack Occured!!!!!! ####################################\n");
-		//if (header->len == 1514) printf("#################################### Ping of Death Occured!!!!!! ####################################\n");
-
-	//if (tcp->win_size == 0) printf("#################################### Slow Read Occured!!!!!! ####################################\n");
-		//if (header->len == 1514) printf("#################################### UDP Flood Occured!!!!!! ####################################\n");
-
+	d_atk(&frame_data);
 }
 
 frame frame_handler(const struct pcap_pkthdr* header, const u_char* pkt_data)

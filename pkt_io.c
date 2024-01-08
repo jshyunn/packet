@@ -3,7 +3,7 @@
 void print_frame_data(const frame_header* frame_hdr)
 {
 	printf("=============================== Frame ================================\n");
-	printf("%s Frame Length: %d Capture Length: %d\n", frame_hdr->arrival_time, frame_hdr->frame_len, frame_hdr->len);
+	printf("Time: %s Frame Length: %d Capture Length: %d\n", frame_hdr->arrival_time, frame_hdr->frame_len, frame_hdr->len);
 }
 
 void print_ether_data(const ether_header* ether_hdr)
@@ -17,7 +17,13 @@ void print_ether_data(const ether_header* ether_hdr)
 
 void print_l3_data(const ether* l2_data)
 {
-	switch (l2_data->type)
+	if (l2_data->body_type < 0x0600)
+	{
+		printf("============================ IEEE 802.3 ==============================\n");
+		return;
+	}
+
+	switch (l2_data->body_type)
 	{
 	case IPv4:
 		print_ip_data(&l2_data->body.ip_data.header);
@@ -27,6 +33,7 @@ void print_l3_data(const ether* l2_data)
 		break;
 	case IPv6:
 		printf("=============================== IPv6 =================================\n");
+		break;
 	}
 }
 
@@ -64,7 +71,7 @@ void print_arp_data(const arp* arp_data)
 
 void print_l4_data(const ip* l3_data)
 {
-	switch (l3_data->type)
+	switch (l3_data->body_type)
 	{
 	case ICMP:
 		print_icmp_data(&l3_data->body.icmp_data.header);
@@ -109,10 +116,11 @@ void fprint(FILE* log_file, const frame* frame_data)
 {
 	ip_addr src = frame_data->body.ether_data.body.ip_data.header.src;
 	ip_addr dst = frame_data->body.ether_data.body.ip_data.header.dst;
+
 	fprintf(log_file, "%s\t%d.%d.%d.%d\t%d.%d.%d.%d\t%x\t%d\n",
 	frame_data->header.arrival_time,
 	src.byte1, src.byte2, src.byte3, src.byte4,
 	dst.byte1, dst.byte2, dst.byte3, dst.byte4,
-	frame_data->body.ether_data.body.ip_data.type,
+	frame_data->body.ether_data.body.ip_data.body_type,
 	frame_data->header.frame_len);
 }
