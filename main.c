@@ -9,8 +9,8 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
-#include "protocol.h"
-#include "pkt_handler.h"
+#include "header/protocol.h"
+#include "header/pkt_handler.h"
 
 #ifdef _WIN32
 #include <tchar.h>
@@ -62,7 +62,7 @@ int main()
 		{
 		case 1:
 			{
-			char pcap_file_path[MAX_PATH + _MAX_FNAME] = "C://Users//TJ//Desktop//npcap-sdk-1.13//Examples-pcap//basic_dump//land_attack.pcap";
+			char pcap_file_path[MAX_PATH + _MAX_FNAME] = "C://Users//TJ//Desktop//npcap-sdk-1.13//Examples-pcap//basic_dump//test//land_attack.pcap";
 
 				printf("Enter pcap file path: ");
 				/*rewind(stdin);

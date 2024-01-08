@@ -1,8 +1,15 @@
 #include <stdio.h>
 #include <time.h>
+<<<<<<< HEAD:pkt_handler.c
 #include "pkt_handler.h"
 #include "pkt_io.h"
 #include "atk_detector.h"
+=======
+#include "../header/protocol.h"
+#include "../header/pkt_handler.h"
+#include "../header/pkt_io.h"
+#include "../header/atk_detector.h"
+>>>>>>> d919423 (파일 정리):source/pkt_handler.c
 
 /* Callback function invoked by libpcap for every incoming packet */
 void packet_handler(u_char* log_file, const struct pcap_pkthdr* header, const u_char* pkt_data)

@@ -1,4 +1,4 @@
-#include "atk_detector.h"
+#include "../header/atk_detector.h"
 
 void d_atk(frame* frame_data)
 {

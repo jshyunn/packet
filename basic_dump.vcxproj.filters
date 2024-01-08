@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.c" />
+    <ClCompile Include="source\atk_detector.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pkt_handler.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\pkt_io.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header">
+      <UniqueIdentifier>{6c1ea3d1-dce9-4f43-85d7-411304f35179}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{c7ee4bc3-495d-46be-baca-4c68240328e8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="header\atk_detector.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="header\pkt_handler.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="header\pkt_io.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="header\protocol.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

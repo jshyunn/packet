@@ -195,16 +195,16 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="atk_detector.c" />
-    <ClCompile Include="pkt_io.c" />
     <ClCompile Include="main.c" />
-    <ClCompile Include="pkt_handler.c" />
+    <ClCompile Include="source\atk_detector.c" />
+    <ClCompile Include="source\pkt_handler.c" />
+    <ClCompile Include="source\pkt_io.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="atk_detector.h" />
-    <ClInclude Include="pkt_io.h" />
-    <ClInclude Include="pkt_handler.h" />
-    <ClInclude Include="protocol.h" />
+    <ClInclude Include="header\atk_detector.h" />
+    <ClInclude Include="header\pkt_handler.h" />
+    <ClInclude Include="header\pkt_io.h" />
+    <ClInclude Include="header\protocol.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
