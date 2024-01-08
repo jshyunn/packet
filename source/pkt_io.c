@@ -1,5 +1,14 @@
 #include "../header/pkt_io.h"
 
+void print_data(const frame* frame_data)
+{
+	printf("\n");
+	print_l2_data(frame_data);
+	print_l3_data(&frame_data->body.ether_data);
+	print_l4_data(&frame_data->body.ether_data.body.ip_data);
+	printf("\n");
+}
+
 void print_frame_data(const frame_header* frame_hdr)
 {
 	printf("=============================== Frame ================================\n");
@@ -13,28 +22,6 @@ void print_ether_data(const ether_header* ether_hdr)
 		ether_hdr->src.byte1, ether_hdr->src.byte2, ether_hdr->src.byte3, ether_hdr->src.byte4, ether_hdr->src.byte5, ether_hdr->src.byte6,
 		ether_hdr->dst.byte1, ether_hdr->dst.byte2, ether_hdr->dst.byte3, ether_hdr->dst.byte4, ether_hdr->dst.byte5, ether_hdr->dst.byte6,
 		ether_hdr->type);
-}
-
-void print_l3_data(const ether* l2_data)
-{
-	if (l2_data->body_type < 0x0600)
-	{
-		printf("============================ IEEE 802.3 ==============================\n");
-		return;
-	}
-
-	switch (l2_data->body_type)
-	{
-	case IPv4:
-		print_ip_data(&l2_data->body.ip_data.header);
-		break;
-	case ARP:
-		print_arp_data(&l2_data->body.arp_data);
-		break;
-	case IPv6:
-		printf("=============================== IPv6 =================================\n");
-		break;
-	}
 }
 
 void print_ip_data(const ip_header* ip_hdr)
@@ -60,7 +47,7 @@ void print_arp_data(const arp* arp_data)
 	printf("Protocol Type: 0x%04x\n", arp_data->pro);
 	printf("Hardware Size: %d\n", arp_data->hlen);
 	printf("Protocol Size: %d\n", arp_data->plen);
-	printf("Opcode: %04x\n", arp_data->op);
+	printf("Opcode: 0x%04x\n", arp_data->op);
 	printf("Sender MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n",
 		arp_data->sha.byte1, arp_data->sha.byte2, arp_data->sha.byte3, arp_data->sha.byte4, arp_data->sha.byte5, arp_data->sha.byte6);
 	printf("Sender IP Address: %d.%d.%d.%d\n", arp_data->spa.byte1, arp_data->spa.byte2, arp_data->spa.byte3, arp_data->spa.byte4);
@@ -69,21 +56,6 @@ void print_arp_data(const arp* arp_data)
 	printf("Target IP Address: %d.%d.%d.%d\n", arp_data->dpa.byte1, arp_data->dpa.byte2, arp_data->dpa.byte3, arp_data->dpa.byte4);
 }
 
-void print_l4_data(const ip* l3_data)
-{
-	switch (l3_data->body_type)
-	{
-	case ICMP:
-		print_icmp_data(&l3_data->body.icmp_data.header);
-		break;
-	case TCP:
-		print_tcp_data(&l3_data->body.tcp_data.header);
-		break;
-	case UDP: 
-		print_udp_data(&l3_data->body.udp_data.header);
-		break;
-	}
-}
 void print_icmp_data(const icmp_header* icmp_hdr)
 {
 	printf("================================ ICMP ================================\n");
@@ -112,7 +84,51 @@ void print_udp_data(const udp_header* udp_hdr)
 	printf("Checksum: 0x%04x\n", ntohs(udp_hdr->checksum));
 }
 
-void fprint(FILE* log_file, const frame* frame_data)
+void print_l2_data(const frame* frame_data)
+{
+	print_frame_data(&frame_data->header);
+	print_ether_data(&frame_data->body.ether_data.header);
+}
+
+void print_l3_data(const ether* l2_data)
+{
+	if (l2_data->body_type < 0x0600)
+	{
+		printf("============================ IEEE 802.3 ==============================\n");
+		return;
+	}
+
+	switch (l2_data->body_type)
+	{
+	case IPv4:
+		print_ip_data(&l2_data->body.ip_data.header);
+		break;
+	case ARP:
+		print_arp_data(&l2_data->body.arp_data);
+		break;
+	case IPv6:
+		printf("=============================== IPv6 =================================\n");
+		break;
+	}
+}
+
+void print_l4_data(const ip* l3_data)
+{
+	switch (l3_data->body_type)
+	{
+	case ICMP:
+		print_icmp_data(&l3_data->body.icmp_data.header);
+		break;
+	case TCP:
+		print_tcp_data(&l3_data->body.tcp_data.header);
+		break;
+	case UDP:
+		print_udp_data(&l3_data->body.udp_data.header);
+		break;
+	}
+}
+
+void fprint_data(FILE* log_file, const frame* frame_data)
 {
 	ip_addr src = frame_data->body.ether_data.body.ip_data.header.src;
 	ip_addr dst = frame_data->body.ether_data.body.ip_data.header.dst;

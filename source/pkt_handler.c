@@ -17,14 +17,10 @@ void packet_handler(u_char* log_file, const struct pcap_pkthdr* header, const u_
 	if (header->len < 14) return;
 
 	frame frame_data = frame_handler(header, pkt_data);
-	printf("\n");
-	print_frame_data(&frame_data.header);
-	print_ether_data(&frame_data.body.ether_data.header);
-	print_l3_data(&frame_data.body.ether_data);
-	print_l4_data(&frame_data.body.ether_data.body.ip_data);
-	printf("\n");
 
-	fprint((FILE*)log_file, &frame_data);
+	print_data(&frame_data);
+
+	fprint_data((FILE*)log_file, &frame_data);
 
 	d_atk(&frame_data);
 }
@@ -135,7 +131,7 @@ arp arp_handler(const u_char* pkt_data)
 	pkt.pro = ntohs(raw->pro);
 	pkt.hlen = raw->hlen;
 	pkt.plen = raw->plen;
-	pkt.op = raw->op;
+	pkt.op = ntohs(raw->op);
 	pkt.sha = raw->sha;
 	pkt.spa = raw->spa;
 	pkt.dha = raw->dha;
